@@ -33,10 +33,42 @@ def analyze_question(client: LLMClient, question: str) -> QuestionAnalysis:
     response = client.chat(messages, temperature=0, json_mode=True)
     print(f"Texto crudo del LLM:\n{response.text}\n")
 
+    max_retries = 2
+    for attempt in range(max_retries + 1):
+        response = client.chat(
+            messages,
+            temperature=0,
+            max_tokens=10 if attempt == 0 else None,
+            json_mode=attempt > 0,
+        )
+
+        print(f"Intento {attempt + 1}: finish_reason={response.finish_reason}")
+        print(response.text)
+
+    for attempt in range(max_retries):
+        response = client.chat(messages, temperature=0, json_mode=True)
+        try:
+            data = json.loads(response.text)
+            return QuestionAnalysis.model_validate(data)
+        except json.JSONDecodeError as exc:
+            error=(f"El LLM no devolvió JSON válido: {exc}")
+        except ValidationError as exc:
+            error=(f"El JSON no cumple el esquema:\n{exc}")
+        if attempt == max_retries:
+            raise ValueError("El LLM no devolvió un JSON válido después de varios intentos. \n" + error)
+
+        messages.extend(
+            [
+                {"role": "assistant", "content": response.text},
+                {"role": "user", "content": ("El JSON que me diste no es válido."
+                    "Por favor, intenta de nuevo y asegúrate de que sea un objeto JSON válido que cumpla con el esquema.")},
+            ]   
+        )
+    raise ValueError("El bucle acabo de manera inesperada")
+
     # TODO 6: convierte el texto en un QuestionAnalysis en dos pasos separados:
     #   1. json.loads(...)                     → ¿es JSON válido?
     #   2. QuestionAnalysis.model_validate(...) → ¿cumple el esquema?
-    raise NotImplementedError("Completa analyze_question")
 
 
 def main() -> None:
