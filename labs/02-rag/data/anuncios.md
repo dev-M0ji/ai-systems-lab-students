@@ -17,3 +17,7 @@ este laboratorio agrega nuevas dependencias.
 Comienza la unidad 5, De Transformer a sistemas orquestados con LLM. Durante cuatro semanas
 construiremos el Asistente Inteligente del Curso de IA. Cada semana se publica un laboratorio que
 parte del anterior.
+
+## Anuncio del 20 de septiembre de 2026: Cambio en horario de asesoria
+
+La hora de asesoria cambia de las 12 AM a las 3 PM

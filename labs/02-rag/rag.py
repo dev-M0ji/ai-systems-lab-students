@@ -28,12 +28,18 @@ class RAGAnswer:
 
 def format_context(results: list[SearchResult]) -> str:
     """Numera los fragmentos para que el LLM pueda citarlos: "[1] (evaluacion.md) texto"."""
+    if not results:
+        return NO_CONTEXT
+    parts = [
+        f"[{i}] ({r.chunk.source})\n{r.chunk.text}"
+        for i, r in enumerate(results, start=1)
+    ]
+    return "\n\n".join(parts)
     # TODO 3: convierte los resultados en el texto de contexto que leerá el LLM.
     #   - Si no hay resultados, devuelve NO_CONTEXT.
     #   - Si hay, un bloque por fragmento, numerado desde 1 y separado por una línea en blanco:
     #       [1] (evaluacion.md) El primer parcial se realizará...
     #       [2] (anuncios.md) Por la jornada institucional...
-    raise NotImplementedError("Completa format_context")
 
 
 class CourseRAG:
@@ -54,10 +60,10 @@ class CourseRAG:
     def retrieve(self, question: str) -> list[SearchResult]:
         query_vector = self.embedder.embed_query(question)
         results = self.store.search(query_vector, self.top_k)
+        return [r for r in results if r.score >= self.min_score]
         # TODO 6: descarta los resultados con score menor que self.min_score.
         #   Antes de completarlo, pregunta algo sin relación con el curso en --debug y observa
         #   qué fragmentos recibe el LLM. Elige el umbral con search.py (Paso 6 de la guía).
-        return results
 
     def answer(self, question: str, history: list[Message] | None = None) -> RAGAnswer:
         sources = self.retrieve(question)
